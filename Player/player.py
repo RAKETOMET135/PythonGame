@@ -1,6 +1,6 @@
 from __future__ import annotations
 import pygame
-from GameObjects.game_object import GameObject
+from GameObjects.game_object import GameObject, ParticleEmitter
 import Level.level_handler
 
 image_load: pygame.image.load = pygame.image.load
@@ -51,9 +51,22 @@ class Player:
         self._crouch_shoot_walk_left_images = []
         self._crouch_shoot_walk_right_images = []
         self._crouch_shoot_up_images = []
+        self._jump_particles = ParticleEmitter()
+        self._dash_particles = ParticleEmitter()
+        self._walk_particle_delay = 0
+        self._current_weapon = "pistol"
+        self._weapon_delay = 0
 
         self.load_crouch_animations()
+        self.set_particle_emitters()
     
+    def set_particle_emitters(self) -> None:
+        self._jump_particles.set_particle_image("Images/SnowParticle.png")
+        self._jump_particles.set_emitter(1000, (0, 0), (0, 0), [(5, 5), (-5, 5), (0, 5)], 20, 5, False, (-5, 5, 3, 7))
+
+        self._dash_particles.set_particle_image("Images/SnowParticle.png")
+        self._dash_particles.set_emitter(1000, (0, 0), (0, 0), [(0, 0)], 20, 5, False, (-5, 5, -5, 5))
+
     def load_crouch_animations(self) -> None:
         for anim_frame in self._idle_left_images:
             self._crouch_idle_left.append(pygame.transform.scale(anim_frame, [self._rect.width, self._rect.height / self._crouch_height_diff]))
@@ -223,6 +236,10 @@ class Player:
             self._vertical -= self._gravity * 2 * 1.5
             self._ground_delay += 1
         else:
+            if self._ground_delay > 10:
+                self._jump_particles.emit(5, (int(self._position[0] + self._rect.width/2), int(self._position[0] + self._rect.width/2)), 
+                                          (int(self._position[1] - self._rect.height), int(self._position[1] - self._rect.height)))
+
             self._vertical = 0
             self._ground_delay = 0
             self._dash_air_block = False
@@ -239,6 +256,8 @@ class Player:
         if key[pygame.K_SPACE] and self._grounded:
             if not self._crouch:
                 self._vertical = 1000 * 1.35
+                self._jump_particles.emit(5, (int(self._position[0] + self._rect.width/2), int(self._position[0] + self._rect.width/2)), 
+                                          (int(self._position[1] - self._rect.height), int(self._position[1] - self._rect.height)))
             elif not self._main_ground:
                 self._skip_grounded = 50
                 self._grounded = False
@@ -255,7 +274,18 @@ class Player:
             
             if not self._grounded:
                 self._dash_air_block = True
+            
+            self._dash_particles.emit(10, (int(self._position[0] + self._rect.width/2), int(self._position[0] + self._rect.width/2)),
+                                      (int(self._position[1] - self._rect.height/2), int(self._position[1] - self._rect.height/2)))
         
+        if key[pygame.K_1] and self._weapon_delay <= 0:
+            if self._current_weapon == "pistol":
+                self._current_weapon = "shotgun"
+            else:
+                self._current_weapon = "pistol"
+            
+            self._weapon_delay = 30
+
         if key[pygame.K_f] and self._bullet_delay <= 1 and self._dash <= 0:
             fix: int = 20
 
@@ -277,10 +307,13 @@ class Player:
                 bullet_position = [(self._position[0] + self._rect.width/2) + self._rect.width/2 * self._last_side, self._position[1] - self._rect.height/2 - fix]
                 bullet_direction = [self._last_side, 0]
 
-            Level.level_handler.create_bullet(bullet_position, bullet_direction)
+            Level.level_handler.create_bullet(bullet_position, bullet_direction, self._current_weapon)
 
             self._bullet_delay = 35
         
+        if self._weapon_delay > 0:
+            self._weapon_delay -= 1
+
         if self._bullet_delay > 0:
             self._bullet_delay -= 1
         
@@ -292,6 +325,16 @@ class Player:
 
         if self._dash_cooldown > 0:
             self._dash_cooldown -= 1
+
+        if not self._horizontal == 0 and self._ground_delay < 10:
+            if self._walk_particle_delay < 10:
+                self._walk_particle_delay += 1
+            else:
+                self._walk_particle_delay = 0
+                self._jump_particles.emit(1, (int(self._position[0] + self._rect.width/2), int(self._position[0] + self._rect.width/2)), 
+                                        (int(self._position[1] - self._rect.height), int(self._position[1] - self._rect.height)))
+        else:
+            self._walk_particle_delay = 0
 
         if self._dash <= 0:
             self._position = [self._position[0] + self._movespeed * delta_time * self._horizontal, self._position[1] + self._vertical * delta_time]

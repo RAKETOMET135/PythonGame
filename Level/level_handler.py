@@ -9,7 +9,8 @@ background_game_object: GameObject
 ground_game_object: GameObject
 
 snow: ParticleEmitter = ParticleEmitter()
-snow.set_emitter(20, [0, 1964], [-10, -10], [0, -1], 960, 1)
+snow.set_emitter(20, (0, 1964), (-10, -10), [(0, -1)], 960, 1, True, (-1, 1, -2, -1))
+snow.set_particle_image("Images/SnowParticle.png")
 
 def start_level(level: str) -> None:
     global plr, current_level_game_objects, background_game_object, ground_game_object
@@ -44,11 +45,65 @@ def start_level(level: str) -> None:
     plr = player.Player()
     plr.set_position([10, -800])
 
-def create_bullet(bullet_position: tuple[int, int], bullet_direction: tuple[int, int]) -> None:
-    bullet: Bullet = Bullet()
-    bullet.set_direction(bullet_direction)
-    bullet.set_position(bullet_position)
-    current_level_bullets.append(bullet)
+def create_bullet(bullet_position: tuple[int, int], bullet_direction: tuple[int, int], current_player_weapon: str) -> None:
+    if current_player_weapon == "pistol":
+        bullet: Bullet = Bullet()
+        bullet.set_direction(bullet_direction)
+        bullet.set_position(bullet_position)
+        current_level_bullets.append(bullet)
+    elif current_player_weapon == "shotgun":
+        middle_bullet: Bullet = Bullet()
+        middle_bullet.set_direction(bullet_direction)
+        middle_bullet.set_position(bullet_position)
+        middle_bullet.set_duration(25)
+        middle_bullet._image = pygame.image.load("Images/RedBullet.png")
+        current_level_bullets.append(middle_bullet)
+
+        if not bullet_direction[0] == 0:
+            rotation_multi: int = 1
+            if bullet_direction[0] < 0:
+                rotation_multi = -1
+
+            top_bullet: Bullet = Bullet()
+            top_bullet.set_direction((bullet_direction[0], 0.5))
+            top_bullet.set_position(bullet_position)
+            top_bullet.set_duration(25)
+            top_bullet._image = pygame.image.load("Images/RedBullet.png")
+            top_bullet._image = pygame.transform.rotate(top_bullet._image, 22.5 * rotation_multi)
+            top_bullet._rect = top_bullet._image.get_rect()
+            
+            bottom_bullet: Bullet = Bullet()
+            bottom_bullet.set_direction((bullet_direction[0], -0.5))
+            bottom_bullet.set_position(bullet_position)
+            bottom_bullet.set_duration(25)
+            bottom_bullet._image = pygame.image.load("Images/RedBullet.png")
+            bottom_bullet._image = pygame.transform.rotate(bottom_bullet._image, -22.5 * rotation_multi)
+            bottom_bullet._rect = bottom_bullet._image.get_rect()
+
+            current_level_bullets.append(top_bullet)
+            current_level_bullets.append(bottom_bullet)
+        else:
+            top_bullet: Bullet = Bullet()
+            top_bullet.set_direction((0.5, bullet_direction[1]))
+            top_bullet.set_position(bullet_position)
+            top_bullet.set_duration(25)
+            top_bullet._image = pygame.image.load("Images/RedBullet.png")
+            top_bullet._image = pygame.transform.rotate(top_bullet._image, 45)
+            top_bullet._rect = top_bullet._image.get_rect()
+            
+            bottom_bullet: Bullet = Bullet()
+            bottom_bullet.set_direction((-0.5, bullet_direction[1]))
+            bottom_bullet.set_position(bullet_position)
+            bottom_bullet.set_duration(25)
+            bottom_bullet._image = pygame.image.load("Images/RedBullet.png")
+            bottom_bullet._image = pygame.transform.rotate(bottom_bullet._image, -45)
+            bottom_bullet._rect = bottom_bullet._image.get_rect()
+
+            current_level_bullets.append(top_bullet)
+            current_level_bullets.append(bottom_bullet)
+
+            middle_bullet._image = pygame.transform.rotate(middle_bullet._image, -90)
+            middle_bullet._rect = middle_bullet._image.get_rect()
 
 def remove_bullet(bullet: Bullet) -> None:
     if bullet in current_level_bullets:
