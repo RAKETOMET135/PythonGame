@@ -163,3 +163,30 @@ class Bullet:
 
         if self._position[0] < -2000 or self._position[0] > 2000 or self._position[1] > 2000 or self._position[1] < -2000:
             Level.level_handler.remove_bullet(self)
+
+class Boss:
+    def __init__(self, health: float) -> None:
+        self._health = health
+        self._idle_images = [image_load("Images/BossDefault.png"), image_load("Images/BossDefault2.png")]
+        self._state = "idle"
+        self._image = self._idle_images[0]
+        self._rect = self._image.get_rect()
+        self._position = (0, 0)
+        self._idle_animation_frame = 0
+
+    def set_position(self, position: tuple[int, int]) -> None:
+        self._position = position
+
+    def animate(self) -> None:
+        if self._idle_animation_frame +1 >= 40:
+            self._idle_animation_frame = 0
+        
+        self._image = self._idle_images[self._idle_animation_frame // 20]
+
+    def update(self, delta_time: float) -> None:
+        self.animate()
+
+    def render(self, screen: pygame.display) -> None:
+        self._rect.topleft = (self._position[0], -self._position[1])
+
+        screen.blit(self._image, self._rect)

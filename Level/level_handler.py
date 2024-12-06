@@ -1,5 +1,5 @@
 from Player import player
-from GameObjects.game_object import GameObject, Bullet, ParticleEmitter
+from GameObjects.game_object import GameObject, Bullet, ParticleEmitter, Boss
 import pygame
 
 plr: player.Player
@@ -11,6 +11,9 @@ ground_game_object: GameObject
 snow: ParticleEmitter = ParticleEmitter()
 snow.set_emitter(20, (0, 1964), (-10, -10), [(0, -1)], 960, 1, True, (-1, 1, -2, -1))
 snow.set_particle_image("Images/SnowParticle.png")
+
+boss: Boss = Boss(600)
+boss.set_position([1450, -350])
 
 def start_level(level: str) -> None:
     global plr, current_level_game_objects, background_game_object, ground_game_object
@@ -110,15 +113,11 @@ def remove_bullet(bullet: Bullet) -> None:
         current_level_bullets.remove(bullet)
 
 def render_level(level: str, screen: pygame.display, delta_time: float) -> None:
-    global plr, current_level_game_objects, current_level_bullets, background_game_object, ground_game_object
+    global plr, current_level_game_objects, current_level_bullets, background_game_object, ground_game_object, boss
 
     background_game_object.render(screen)
     for game_object in current_level_game_objects:
         game_object.render(screen)
-    
-    for bullet in current_level_bullets:
-        bullet.update(delta_time)
-        bullet.render(screen)
 
     if plr._position[1] < -900:
         plr.set_position([0, 0])
@@ -129,6 +128,13 @@ def render_level(level: str, screen: pygame.display, delta_time: float) -> None:
     elif plr._position[0] > 1840 - 70:
         plr.set_position([1840 - 70, plr._position[1]])
         plr._dash = 0
+
+    boss.update(delta_time)
+    #boss.render(screen)
+
+    for bullet in current_level_bullets:
+        bullet.update(delta_time)
+        bullet.render(screen)
 
     plr.ground_check(current_level_game_objects, delta_time)
     plr.update(delta_time)
