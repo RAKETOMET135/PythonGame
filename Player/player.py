@@ -95,7 +95,7 @@ class Player:
     def set_position(self, position: tuple[int, int]) -> None:
         self._position = position
     
-    def animate(self) -> None:
+    def animate(self, delta_time) -> None:
         if self._idle_animation_frame +1 >= 40:
             self._idle_animation_frame = 0
         
@@ -148,7 +148,7 @@ class Player:
                             self._image = self._shoot_walk_left_images[self._walk_animation_frame // 20]
                         else:
                             self._image = self._walk_left_images[self._walk_animation_frame // 20]
-                        self._walk_animation_frame += 1
+                        self._walk_animation_frame += 1 * int(delta_time * 100)
                     else:
                         if self._crouch:
                             if self._bullet_delay > 0:
@@ -159,7 +159,7 @@ class Player:
                             self._image = self._shoot_walk_right_images[self._walk_animation_frame // 20]
                         else:
                             self._image = self._walk_right_images[self._walk_animation_frame // 20]
-                        self._walk_animation_frame += 1
+                        self._walk_animation_frame += 1 * int(delta_time * 100)
                 else:
                     if self._last_side == 0 or self._last_side > 0:
                         if self._crouch:
@@ -182,7 +182,7 @@ class Player:
                         else:
                             self._image = self._idle_right_images[self._idle_animation_frame // 20]
             
-                    self._idle_animation_frame += 1  
+                    self._idle_animation_frame += 1 * int(delta_time * 100)
 
     def ground_check(self, game_objects: list[GameObject], delta_time: float) -> None:
         grounded: bool = False
@@ -233,8 +233,9 @@ class Player:
             self._horizontal = 0
 
         if not self._grounded:
-            self._vertical -= self._gravity * 2 * 1.5
-            self._ground_delay += 1
+            if self._dash <= 5:
+                self._vertical -= self._gravity * 2 * 1.5 * delta_time * 100 * 2
+            self._ground_delay += 1 * delta_time * 100
         else:
             if self._ground_delay > 10:
                 self._jump_particles.emit(5, (int(self._position[0] + self._rect.width/2), int(self._position[0] + self._rect.width/2)), 
@@ -255,7 +256,7 @@ class Player:
         
         if key[pygame.K_SPACE] and self._grounded:
             if not self._crouch:
-                self._vertical = 1000 * 1.35
+                self._vertical = 1000 * 1.35 * 1.25
                 self._jump_particles.emit(5, (int(self._position[0] + self._rect.width/2), int(self._position[0] + self._rect.width/2)), 
                                           (int(self._position[1] - self._rect.height), int(self._position[1] - self._rect.height)))
             elif not self._main_ground:
@@ -315,7 +316,7 @@ class Player:
             self._weapon_delay -= 1
 
         if self._bullet_delay > 0:
-            self._bullet_delay -= 1
+            self._bullet_delay -= 1 * delta_time * 200
         
         if self._bullet_delay_up > 0:
             self._bullet_delay_up -= 1
@@ -340,11 +341,11 @@ class Player:
             self._position = [self._position[0] + self._movespeed * delta_time * self._horizontal, self._position[1] + self._vertical * delta_time]
         else:
             self._position = [self._position[0] + 300 * 5 * delta_time * self._dash_direction, self._position[1]]
-            self._dash -= 1
+            self._dash -= 1 * delta_time * 100
             self._dash_cooldown = 50
 
-    def render(self, screen: pygame.display) -> None:
-        self.animate()
+    def render(self, screen: pygame.display, delta_time: float) -> None:
+        self.animate(delta_time)
 
         self._rect.topleft = (self._position[0], -self._position[1])
 
