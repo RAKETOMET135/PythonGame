@@ -3,7 +3,12 @@ from typing import Final
 from Level import level_handler
 
 def render(screen: pygame.display, delta_time: float, level: str) -> None:
-    level_handler.render_level(level, screen, delta_time)
+    if level_handler.victory_background:
+        level_handler.render_victory(screen, delta_time)
+    elif level_handler.game_over_background:
+        level_handler.render_game_over(screen, delta_time)
+    else:
+        level_handler.render_level(level, screen, delta_time)
 
 def main() -> None:
     MAX_FRAMERATE: Final[int] = 120
@@ -32,8 +37,13 @@ def main() -> None:
 
         if key[pygame.K_ESCAPE]:
             running = False
+            level_handler.restart_game = False
 
         pygame.display.flip()
+
+        if level_handler.restart_game:
+            pass
+            #running = False
 
         delta_time = clock.tick(MAX_FRAMERATE) / 1000
 

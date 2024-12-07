@@ -218,6 +218,9 @@ class Boss:
     def take_damage(self, damage: float) -> None:
         self._health -= damage
 
+        if self._health <= 0:
+            Level.level_handler.victory()
+
     def animate(self) -> None:
         if self._idle_animation_frame +1 >= 40:
             self._idle_animation_frame = 0
@@ -248,10 +251,13 @@ class Boss:
 
         Level.level_handler.create_cloud()
     
-    def candy_cane(self) -> None:
-        self._candy_cane_anim_counter = 60
+    def candy_cane(self, version: int) -> None:
+        if version == 0:
+            self._candy_cane_anim_counter = 60
+        else:
+            self._carrot_anim_counter = 60
 
-        Level.level_handler.create_candy_cane()
+        Level.level_handler.create_candy_cane(version)
 
     def handle_phases(self, delta_time: float) -> None:
         if self._phase == 0:
@@ -260,18 +266,17 @@ class Boss:
             if self._phase_counter > 450:
                 self._phase_counter = 0
 
-                event: int = random.randint(0, 2)
+                event: int = random.randint(0, 3)
 
                 match event:
                     case 1:
                         self.cloud()
                     case 2:
-                        self.candy_cane()
+                        self.candy_cane(0)
+                    case 3:
+                        self.candy_cane(1)
                     case _:
                         self.tracked_carrot()
-
-                
-
 
     def update(self, delta_time: float) -> None:
         self.animate()
